@@ -258,9 +258,14 @@ $(document).on('click', function (e) {
         if (!$(e.target).parents().is(".inlineEditActive, .cal_panel") && !$(e.target).hasClass("inlineEditActive")) {
             var output_value = loadFieldHTMLValue(field, id, module);
             var user_value = getInputValue(field, type);
-            // Fix for issue #373 strip HTML tags for correct comparison
-            var output_value_compare = $(output_value).text();
-            if (user_value != output_value_compare) {
+
+            var output_value_compare = '';
+            if(output_value.indexOf('<a') == -1) {
+                output_value_compare = output_value;
+            } else {
+                output_value_compare = $(output_value).text();
+            }
+            if (user_value != output_value_compare && user_value != undefined) {
                 var r = confirm(SUGAR.language.translate('app_strings', 'LBL_CONFIRM_CANCEL_INLINE_EDITING') + message_field);
                 if (r == true) {
                     var output = setValueClose(output_value);
@@ -270,9 +275,11 @@ $(document).on('click', function (e) {
                     e.preventDefault();
                 }
             } else {
-                // user hasn't changed value so can close field without warning them first
-                var output = setValueClose(output_value);
-                clickListenerActive = false;
+                if (String( (e.target).id) != 'inline_edit_icon' ) {
+                    // user hasn't changed value so can close field without warning them first
+                    var output = setValueClose(output_value);
+                    clickListenerActive = false;
+                }
             }
         }
     }
@@ -300,7 +307,11 @@ function getInputValue(field,type){
             case 'name':
             case 'varchar':
                 if($('#'+ field).val().length > 0) {
-                    return $('#'+ field).val();
+                    if(field === 'assigned_user_name') {
+                        return $('#' + field + '_display').val();
+                    } else {
+                        return $('#' + field).val();
+                    }
                 }
                 break;
             case 'enum':
