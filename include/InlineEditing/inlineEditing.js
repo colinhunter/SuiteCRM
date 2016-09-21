@@ -258,25 +258,36 @@ $(document).on('click', function (e) {
         if (!$(e.target).parents().is(".inlineEditActive, .cal_panel") && !$(e.target).hasClass("inlineEditActive")) {
             var output_value = loadFieldHTMLValue(field, id, module);
             var user_value = getInputValue(field, type);
-
+            var date_compare = false;
+            if(field == 'date_start') {
+                if(parseInt(output_value.substring(output_value.length-5, output_value.length)) == parseInt(user_value.substring(user_value.length-5, user_value.length))+1 ) {
+                    date_compare = true;
+                }
+            }
             var output_value_compare = '';
             if(output_value.indexOf('<a') == -1) {
                 output_value_compare = output_value;
             } else {
                 output_value_compare = $(output_value).text();
             }
+            if(date_compare) {
+                output_value_compare = user_value;
+            }
             if (user_value != output_value_compare && user_value != undefined) {
                 var r = confirm(SUGAR.language.translate('app_strings', 'LBL_CONFIRM_CANCEL_INLINE_EDITING') + message_field);
                 if (r == true) {
                     var output = setValueClose(output_value);
                     clickListenerActive = false;
-                } else {
-                    $("#" + field).focus();
-                    e.preventDefault();
-                }
+                 } else {
+                     $("#" + field).focus();
+                     e.preventDefault();
+                 }
             } else {
                 if (String( (e.target).id) != 'inline_edit_icon' ) {
                     // user hasn't changed value so can close field without warning them first
+                    if(date_compare) {
+                        output_value = user_value;
+                    }
                     var output = setValueClose(output_value);
                     clickListenerActive = false;
                 }
