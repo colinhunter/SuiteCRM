@@ -247,7 +247,7 @@ function getEditFieldHTML($module, $fieldname, $aow_field, $view = 'EditView', $
         $fieldlist[$fieldname]['value'] = $value;
         $fieldlist[$fieldname]['id_name'] = $aow_field;
         $fieldlist[$fieldname]['name'] = $aow_field . '_display';
-    } else if (isset($fieldlist[$fieldname]['type']) && ($fieldlist[$fieldname]['type'] == 'datetimecombo' || $fieldlist[$fieldname]['type'] == 'datetime')) {
+    } else if (isset($fieldlist[$fieldname]['type']) && ($fieldlist[$fieldname]['type'] == 'datetimecombo' || $fieldlist[$fieldname]['type'] == 'datetime' || $fieldlist[$fieldname]['type'] == 'date')) {
         $value = $focus->convertField($value, $fieldlist[$fieldname]);
         if (!$value) {
             $value = date($timedate->get_date_time_format());
@@ -403,21 +403,25 @@ function formatDisplayValue($bean, $value, $vardef, $method = "save")
 
     }
 
-    //If field is of type date time or datetimecombo
-    if ($vardef['type'] == "datetimecombo" || $vardef['type'] == "datetime") {
+    //If field is of type date time, datetimecombo or date
+    if ($vardef['type'] == "datetimecombo" || $vardef['type'] == "datetime" || $vardef['type'] == "date") {
 
+        if ($method != "close") {
+            if ($method != "save") {
+                $value = convertDateUserToDB($value);
+            }
+            $datetime_format = $timedate->get_date_time_format();
 
-        if ($method != "save") {
-            $value = convertDateUserToDB($value);
+            if($vardef['type'] == "date") {
+                $value = $value . ' 00:00:00';
+            }
+            // create utc date (as it's utc in db)
+            $datetime = DateTime::createFromFormat("Y-m-d H:i:s", $value, new DateTimeZone('UTC'));
+            // convert it to timezone the user uses
+            $datetime = $timedate->tzUser($datetime);
+
+            $value = $datetime->format($datetime_format);
         }
-        $datetime_format = $timedate->get_date_time_format();
-        // create utc date (as it's utc in db)
-        $datetime = DateTime::createFromFormat("Y-m-d H:i:s", $value,new DateTimeZone('UTC'));
-        // convert it to timezone the user uses ////////////////////////////////////////////////////////////////////////
-        $datetime = $timedate->tzUser($datetime);
-
-        $value = $datetime->format($datetime_format);
-
     }
 
     //If field is of type bool, checkbox.
@@ -507,7 +511,9 @@ function formatDisplayValue($bean, $value, $vardef, $method = "save")
 		else
 			$value = format_number($value);		
 	}
-	
+	if($vardef['type'] == "date" && $method == "save") {
+        $value = substr($value, 0, strlen($value)-6);
+    }
     return $value;
 }
 

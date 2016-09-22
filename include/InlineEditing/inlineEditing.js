@@ -168,7 +168,8 @@ function buildEditField(){
     };
 
     var touchtime = 0;
-    $('.inlineEdit').on('click', function(e) {
+    $(".inlineEdit").dblclick(function(e) {
+    //$('.inlineEdit').on('click', function(e) {
         if(touchtime == 0) {
             //set first click
             touchtime = new Date().getTime();
@@ -235,7 +236,6 @@ function clickedawayclose(field,id,module, type){
     // Fix for issue #373 get name from system field name.
     message_field = 'LBL_' + field.toUpperCase();
     message_field = SUGAR.language.get(module, message_field);
-
     // Fix for issue #373 remove ':'
     var last_charachter = message_field.substring(message_field.length, message_field.length - 1);
     if (':'.toUpperCase() === last_charachter.toUpperCase()) {
@@ -259,38 +259,29 @@ $(document).on('click', function (e) {
             var output_value = loadFieldHTMLValue(field, id, module);
             var user_value = getInputValue(field, type);
             var date_compare = false;
-            if(field == 'date_start') {
-                if(parseInt(output_value.substring(output_value.length-5, output_value.length)) == parseInt(user_value.substring(user_value.length-5, user_value.length))+1 ) {
+            var output_value_compare = '';
+            if(type == 'datetimecombo' || type == 'datetime' || type == 'date') {
+                if(output_value == user_value) {
+                    output_value_compare = user_value;
                     date_compare = true;
                 }
-            }
-            var output_value_compare = '';
-            if(output_value.indexOf('<a') == -1) {
-                output_value_compare = output_value;
             } else {
                 output_value_compare = $(output_value).text();
             }
-            if(date_compare) {
-                output_value_compare = user_value;
-            }
-            if (user_value != output_value_compare && user_value != undefined) {
-                var r = confirm(SUGAR.language.translate('app_strings', 'LBL_CONFIRM_CANCEL_INLINE_EDITING') + message_field);
+            if (user_value != output_value_compare) {
+                message_field = message_field != 'undefined' ? message_field : '';
+                var r = confirm(SUGAR.language.translate('app_strings', 'LBL_CONFIRM_CANCEL_INLINE_EDITING') + ' ' + message_field);
                 if (r == true) {
                     var output = setValueClose(output_value);
                     clickListenerActive = false;
-                 } else {
-                     $("#" + field).focus();
-                     e.preventDefault();
-                 }
-            } else {
-                if (String( (e.target).id) != 'inline_edit_icon' ) {
-                    // user hasn't changed value so can close field without warning them first
-                    if(date_compare) {
-                        output_value = user_value;
-                    }
-                    var output = setValueClose(output_value);
-                    clickListenerActive = false;
+                } else {
+                    $("#" + field).focus();
+                    e.preventDefault();
                 }
+            } else {
+                // user hasn't changed value so can close field without warning them first
+                var output = date_compare ? setValueClose(user_value) : setValueClose(output_value);
+                clickListenerActive = false;
             }
         }
     }
@@ -308,8 +299,6 @@ $(document).on('click', function (e) {
 
 function getInputValue(field,type){
 
-
-
     if($('#'+ field).length > 0 && type){
 
         switch(type) {
@@ -318,11 +307,7 @@ function getInputValue(field,type){
             case 'name':
             case 'varchar':
                 if($('#'+ field).val().length > 0) {
-                    if(field === 'assigned_user_name') {
-                        return $('#' + field + '_display').val();
-                    } else {
-                        return $('#' + field).val();
-                    }
+                    return $('#'+ field).val();
                 }
                 break;
             case 'enum':
@@ -392,6 +377,7 @@ function getInputValue(field,type){
 function handleSave(field,id,module,type){
     var value = getInputValue(field,type);
     var parent_type = "";
+
     if(typeof value === "undefined"){
         var value = "";
     }
@@ -399,8 +385,6 @@ function handleSave(field,id,module,type){
     if(type == "parent") {
             parent_type = $('#parent_type').val();
     }
-
-
     var output_value = saveFieldHTML(field,module,id,value, parent_type);
     var output = setValueClose(output_value);
 }
@@ -435,7 +419,7 @@ function setValueClose(value){
 
 function saveFieldHTML(field,module,id,value, parent_type) {
     $.ajaxSetup({"async": false});
-    var result = $.post('index.php',
+    var result = $.getJSON('index.php',
         {
             'module': 'Home',
             'action': 'saveHTMLField',
@@ -446,7 +430,7 @@ function saveFieldHTML(field,module,id,value, parent_type) {
             'view' : view,
             'parent_type': parent_type,
             'to_pdf': true
-        }, null, "json"
+        }
     );
     $.ajaxSetup({"async": true});
     return(result.responseText);
