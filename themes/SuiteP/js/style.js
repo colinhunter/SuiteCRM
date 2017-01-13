@@ -233,8 +233,7 @@ $( "button" ).click(function() {
 
 });
 
-// Custom JavaScript for copyright pop-ups
-$(function() {
+var initFooterPopups = function() {
     $( "#dialog, #dialog2" ).dialog({
         autoOpen: false,
         show: {
@@ -253,6 +252,11 @@ $(function() {
     $( "#admin_options" ).click(function() {
         $( "#dialog2" ).dialog( "open" );
     });
+};
+
+// Custom JavaScript for copyright pop-ups
+$(function() {
+    initFooterPopups();
 });
 
 // Back to top animation
@@ -275,7 +279,7 @@ $(function() {
 jQuery(function($){
     $('table.footable').footable({
         "breakpoints": {
-            "x-small": 480,
+            "x-small": 680,
             "small": 768,
             "medium": 992,
             "large": 1130,
@@ -343,21 +347,6 @@ function loadSidebar() {
             $('#bootstrap-container').addClass('expandedSidebar');
         }
     }
-}
-
-
-update_screen_resolution();
-
-    $(window).resize(function () {
-        update_screen_resolution();
-    });
-
-function update_screen_resolution(){
-    $.ajax({
-        url: 'index.php?module=Calendar&action=processScreenSize',
-        type: 'post',
-        data: { 'width' : $( window ).width(), 'height' : $( window ).height(), 'to_pdf': true}
-    });
 }
 
 // Alerts Notification
@@ -463,6 +452,7 @@ $(function () {
             };
 
         }
+
         if (isDetailViewPage()) {
             tabActiveSelector = '#user_detailview_tabs.yui-navset.detailview_tabs.yui-navset-top ul.yui-nav li.selected a';
             tabFramesLength = 3;
@@ -470,7 +460,7 @@ $(function () {
                 // User Profile
                 'tab1': [
                     // User Profile & Employee Information
-                    'div#user_detailview_tabs.yui-navset.detailview_tabs.yui-navset-top div.yui-content',
+                    'form#user_detailview_tabs.yui-navset.detailview_tabs.yui-navset-top div.yui-content',
                     // Email Settings
                     '#email_options',
                     // Security Groups Management etc..
@@ -513,7 +503,7 @@ $(function () {
         }
 
         for (var i = 1; i <= tabFramesLength; i++) {
-            $('#tab' + i).click(function () {
+            $('#tab' + i + ', input[type="button"]').click(function () {
                 setTimeout(function () {
                     tabsRefresh();
                 }, 300);
@@ -530,6 +520,79 @@ $(function () {
         var clazz = $('#bootstrap-container footer').attr('class');
         $('body').append('<footer class="' + clazz + '">' + $('#bootstrap-container footer').html() + '</footer>');
         $('#bootstrap-container footer').remove();
+        initFooterPopups();
     }
+
+    setInterval(function(){
+        $('#alerts').css({left: 16-$('#alerts').width()+'px'});
+    },100);
+
+    // fix dropdown menu top-position
+    var ddInt = setInterval(function(){
+        if($('.sugar_action_button span').length > 0) {
+            $('.sugar_action_button span').click(function (e) {
+                var hsum = 0;
+                if(!$(this).closest('.sugar_action_button').find('.subnav').hasClass('upper')) {
+                    hsum+= 22;
+                }
+                else {
+                    $(this).closest('.sugar_action_button').find('.subnav li').each(function (e) {
+                        hsum -= $(this).height();
+                    });
+                }
+                var _this = $(this);
+                setTimeout(function(){
+                    _this.closest('.sugar_action_button').find('.subnav').css('top', hsum);
+                }, 11);
+            });
+            clearInterval(ddInt);
+        }
+    }, 300);
+
+    var hideEmptyFormCellsOnTablet = function() {
+        if ($(window).width() <= 767) {
+            $('div#content div#pagecontent form#EditView div.edit.view table tbody tr td').each(function (i, e) {
+                $(e).find('slot').each(function(i,e){
+                    if($(e).html().trim() == '&nbsp;') {
+                        $(e).html('&nbsp;');
+                    }
+                });
+                if ($(e).html().trim() == '<slot>&nbsp;</slot>') {
+                    $(e).addClass('hidden');
+                    $(e).addClass('hiddenOnTablet');
+                }
+            });
+        }
+        else {
+            $('div#content div#pagecontent form#EditView div.edit.view table tbody tr td.hidden.hiddenOnTablet').each(function (i, e) {
+                $(e).removeClass('hidden');
+                $(e).removeClass('hiddenOnTablet');
+            });
+        }
+    }
+
+    $(window).click(function(){
+        hideEmptyFormCellsOnTablet();
+        setTimeout(function(){
+            hideEmptyFormCellsOnTablet();
+        }, 500);
+    });
+
+    $(window).resize(function(){
+        hideEmptyFormCellsOnTablet();
+    });
+
+    $(window).load(function(){
+        hideEmptyFormCellsOnTablet();
+    });
+
+    $(document).ready(function(){
+        hideEmptyFormCellsOnTablet();
+    });
+
+    setTimeout(function(){
+        hideEmptyFormCellsOnTablet();
+    }, 1500);
+
 
 });

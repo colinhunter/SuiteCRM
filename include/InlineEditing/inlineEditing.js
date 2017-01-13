@@ -69,6 +69,10 @@ function buildEditField(){
                 clicks = 0;
             }
             clicks++;
+            
+            if(e.ctrlKey && clicks == 1){
+                return;
+            }
 
             e.preventDefault();
             // if single click just want default action of following link, but want to wait in case user is actually trying to double click to edit field
@@ -212,7 +216,7 @@ function validateFormAndSave(field,id,module,type){
     // also want to save on enter/return being pressed
     $(document).keypress(function(e) {
 
-        if (e.which == 13) {
+        if (e.which == 13 && !e.shiftKey) {
             e.preventDefault();
             $("#inlineEditSaveButton").click();
         }
@@ -413,7 +417,7 @@ function setValueClose(value){
 
 function saveFieldHTML(field,module,id,value, parent_type) {
     $.ajaxSetup({"async": false});
-    var result = $.getJSON('index.php',
+    var result = $.post('index.php',
         {
             'module': 'Home',
             'action': 'saveHTMLField',
@@ -424,7 +428,7 @@ function saveFieldHTML(field,module,id,value, parent_type) {
             'view' : view,
             'parent_type': parent_type,
             'to_pdf': true
-        }
+        }, null, "json"
     );
     $.ajaxSetup({"async": true});
     return(result.responseText);
